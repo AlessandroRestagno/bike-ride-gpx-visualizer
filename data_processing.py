@@ -1,6 +1,10 @@
 import gpxpy
 import geopy.distance
 import numpy as np
+import pandas as pd
+import io
+import base64
+from dash import dash_table
 
 # Function to calculate the gradient
 def calculate_gradient(elevation_diff, distance):
@@ -54,3 +58,59 @@ def calculate_final_data(points):
         elevations.append(altitude)
 
     return latitudes, longitudes, gradients, distances, elevations
+
+def parse_gpx(contents):
+    try:
+        # Extract the base64-encoded string
+        content_string = contents.split(',')[1]
+
+        # Decode and read as a file-like object
+        decoded = io.StringIO(io.BytesIO(base64.b64decode(content_string)).read().decode('utf-8'))
+
+        # Extract GPS points from the GPX file
+        points = extract_gpx_data(decoded)
+
+        return points
+    except Exception as e:
+        raise ValueError(f"Error parsing GPX file: {str(e)}")
+
+
+def build_dataframe(points):
+    try:
+        # Calculate gradients, distances, and elevations
+        latitudes, longitudes, gradients, distances, elevations = calculate_final_data(points)
+
+        # Build the DataFrame
+        data = pd.DataFrame({
+            'Latitude': latitudes,
+            'Longitude': longitudes,
+            'Gradient (%)': gradients,
+            'Distance (m)': distances,
+            'Elevation (m)': elevations
+        })
+
+        # Add cumulative distance
+        data['Cumulative Distance (m)'] = data['Distance (m)'].cumsum()
+
+        return data
+    except Exception as e:
+        raise ValueError(f"Error building DataFrame: {str(e)}")
+
+
+def visualize_data(data):
+    try:
+        return dash_table.DataTable(
+            data=data.head(10).to_dict('records'),
+            columns=[{"name": i, "id": i} for i in data.columns],
+            style_table={'overflowX': 'auto'},
+            style_cell={
+                'textAlign': 'center',
+                'padding': '5px',
+            },
+            style_header={
+                'backgroundColor': 'lightgrey',
+                'fontWeight': 'bold'
+            }
+        )
+    except Exception as e:
+        raise ValueError(f"Error visualizing data: {str(e)}")
