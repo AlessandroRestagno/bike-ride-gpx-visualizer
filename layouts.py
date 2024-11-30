@@ -35,10 +35,12 @@ layout = dbc.Container(
         ),
         dbc.Row(
             dbc.Col(
-                html.Div(
-                    id='output-data-upload',
-                    className="mt-4"
-                ),
+                dcc.Loading(
+                            id="loading",
+                            type="dot",  # Choose spinner type: "circle", "dot", or "default"
+                            style={"marginTop": "30px"},
+                            children=dbc.Container(id="output-data-upload", fluid=True),
+                        ),
                 width=12
             )
         )

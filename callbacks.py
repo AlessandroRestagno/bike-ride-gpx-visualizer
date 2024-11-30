@@ -1,5 +1,7 @@
-from dash import html, Input, Output, State
-from data_processing import parse_gpx, build_dataframe, visualize_data
+from dash import html, Input, Output, State, dcc
+from data_processing import parse_gpx, build_dataframe
+import dash_bootstrap_components as dbc
+from data_processing import visualize_data
 
 # Callback to handle file upload and display data
 def register_callbacks(app):
@@ -16,9 +18,21 @@ def register_callbacks(app):
 
                 # Step 2: Build the DataFrame
                 data = build_dataframe(points)
+                fig = visualize_data(data)
 
                 # Step 3: Visualize the data
-                return visualize_data(data)
+                return html.Div(
+                [
+                    html.H4(
+                        f"File '{filename}' uploaded successfully.",
+                        style={"textAlign": "center", "marginTop": "15px"},
+                    ),
+                    dbc.Row(
+                        dbc.Col(dcc.Graph(figure=fig), width=12),  # Full width for all data graph
+                    ),
+                ]
+            )
+                #return visualize_data(data)
 
             except ValueError as e:
                 return f"An error occurred: {str(e)}"

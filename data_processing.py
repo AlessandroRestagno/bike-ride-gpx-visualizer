@@ -4,7 +4,11 @@ import numpy as np
 import pandas as pd
 import io
 import base64
-from dash import dash_table
+from dash import html
+import re
+import plotly.colors as colors
+import plotly.graph_objects as go
+import plotly.express as px
 
 # Function to calculate the gradient
 def calculate_gradient(elevation_diff, distance):
@@ -59,6 +63,21 @@ def calculate_final_data(points):
 
     return latitudes, longitudes, gradients, distances, elevations
 
+# Helper function to convert 'rgb(r,g,b)' string to tuple (r, g, b)
+def rgb_to_tuple(rgb_string):
+    return tuple(map(int, re.findall(r'\d+', rgb_string)))
+
+# Helper function to convert (r, g, b) tuple to 'rgb(r,g,b)' string
+def tuple_to_rgb(rgb_tuple):
+    return f'rgb({rgb_tuple[0]},{rgb_tuple[1]},{rgb_tuple[2]})'
+
+# Linear interpolation between two RGB values
+def interpolate_colors(color1, color2, num_steps):
+    return [(int(color1[0] + (color2[0] - color1[0]) * t),
+             int(color1[1] + (color2[1] - color1[1]) * t),
+             int(color1[2] + (color2[2] - color1[2]) * t))
+            for t in np.linspace(0, 1, num_steps)]
+
 def parse_gpx(contents):
     try:
         # Extract the base64-encoded string
@@ -99,18 +118,86 @@ def build_dataframe(points):
 
 def visualize_data(data):
     try:
-        return dash_table.DataTable(
-            data=data.head(10).to_dict('records'),
-            columns=[{"name": i, "id": i} for i in data.columns],
-            style_table={'overflowX': 'auto'},
-            style_cell={
-                'textAlign': 'center',
-                'padding': '5px',
-            },
-            style_header={
-                'backgroundColor': 'lightgrey',
-                'fontWeight': 'bold'
-            }
+        # Given colorscale
+        original_colors = colors.sequential.Jet
+
+        # Create the new expanded colorscale
+        expanded_colors = []
+
+        for i in range(len(original_colors) - 1):
+            # Convert the current color and the next color to RGB tuples
+            color_start = rgb_to_tuple(original_colors[i])
+            color_end = rgb_to_tuple(original_colors[i + 1])
+
+            # Interpolate 6 points (including both start and end colors)
+            interpolated_colors = interpolate_colors(color_start, color_end, 3)
+
+            # Convert back to 'rgb(r,g,b)' strings and add to the expanded list
+            expanded_colors.extend([tuple_to_rgb(c) for c in interpolated_colors[:-1]])  # Skip last to avoid duplication
+
+        # Add the last color manually
+        expanded_colors.append(original_colors[-1])
+
+        # Create a list of points that have the same distance in meters and assign a specific gradient and color
+        gradient_series = pd.Series(['red'] * int(max(data['Cumulative Distance (m)']) / 10))
+        gradient_range = 20 # minimum and maximum gradient visible on the plot
+        for i in range(len(gradient_series)):
+            closest_index = data['Cumulative Distance (m)'].sub(i*10).abs().idxmin()
+            gradient_retrieved = max(min(data.loc[closest_index,'Gradient (%)'],gradient_range),-gradient_range)
+            gradient_series[i] = expanded_colors[round((gradient_retrieved+gradient_range)/(gradient_range/int(len(expanded_colors)/2)))]
+
+        fig_all = go.Figure()
+
+        # Power Trace with Gradient Fill
+        fig_all.add_trace(
+            go.Scatter(
+                x=np.round(data['Cumulative Distance (m)']),
+                y=np.round(data['Elevation (m)']),
+                customdata=data['Gradient (%)'],
+                hovertemplate='Distance: %{x} m<br>Elevation: %{y} m<br>Gradient: %{customdata}%<extra></extra>',
+                fill='tozeroy',
+                fillgradient=dict(
+                            type='horizontal',
+                            colorscale=gradient_series,
+                        ),
+                mode='lines+markers',
+                marker=dict(
+                    size=1,
+                    symbol='diamond',
+                    showscale=True,
+                    colorscale=expanded_colors,
+                    cmin=-gradient_range,
+                    cmax=gradient_range
+                ),
+                line={'color': 'black'},
+                name='Gradient'),
+                # Custom gradient fill not directly supported; using color per point is limited
+            )
+
+        fig_all.update_layout(
+            title=dict(
+                text='Route Profile',
+                font_size=24,
+                y=0.95,
+                x=0.5,
+                xanchor='center',
+                yanchor='top'
+            ),
+            xaxis=dict(
+                title='Distance (m)',
+                title_font_size=18,
+                title_standoff=10,
+            ),
+            yaxis=dict(
+                title='Altitude (m)',
+                title_font_size=18,
+                title_standoff=10,
+            ),
+            showlegend=False
         )
+
+        return fig_all
+    
     except Exception as e:
         raise ValueError(f"Error visualizing data: {str(e)}")
+
