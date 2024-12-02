@@ -31,8 +31,12 @@ def register_callbacks(app):
                         dbc.Row(
                             dbc.Col(dcc.Graph(figure=fig_profile), width=12),  # Full width for all data graph
                         ),
+                        html.H4(
+                            f"Map",
+                            style={"textAlign": "center", "marginTop": "15px"},
+                        ),
                         dbc.Row(
-                            dbc.Col(html.Div(html.Iframe(srcDoc=fig_map)), width=12),  # Full width for all data graph
+                            dbc.Col(html.Div(html.Iframe(srcDoc=fig_map,height="500px",width="100%")), width=12),  # Full width for all data graph
                         ),
                     ]
                 )

@@ -210,9 +210,9 @@ def visualize_map(data):
         index_10 = data['Cumulative Distance (m)'].sub(10000*(i+1)).abs().idxmin()
         indexes_10km.append(index_10)
 
-    images = ['/assets/images/number-10.png','/assets/images/number-20.png',
-              '/assets/images/number-30.png','/assets/images/40.png',
-              '/assets/images/50.png','/assets/images/60.png','/assets/images/70.png','/assets/images/80.png']
+    images = ['assets/images/number-10.png','assets/images/number-20.png',
+              'assets/images/number-30.png','assets/images/40.png',
+              'assets/images/50.png','assets/images/60.png','assets/images/70.png','assets/images/80.png']
 
     map_center = [data.Latitude[0], data.Longitude[0]]
     m = folium.Map(location=map_center, zoom_start=13)
@@ -223,16 +223,19 @@ def visualize_map(data):
     # Add path with arrows
     folium.PolyLine(points, color="red", weight=5.0, opacity=0.8).add_to(m)
     # 10Km markers
-    # for i in range(len(indexes_10km)):
-    # # Attribution https://www.flaticon.com/free-icon/number-10_9494570?term=ten&page=1&position=6&origin=search&related_id=9494570
+    # Attribution https://www.flaticon.com/free-icon/number-10_9494570?term=ten&page=1&position=6&origin=search&related_id=9494570
     # # 80 blue https://www.flaticon.com/free-icon/80_6913959?related_id=6913959
-    #     pushpin = folium.features.CustomIcon(images[i], icon_size=(45,45))
-    #     folium.Marker(points[indexes_10km[i]+1], icon=pushpin, popup=str((i+1)*10)).add_to(m)
+    for i in range(len(indexes_10km)):
+        try:
+            pushpin = folium.features.CustomIcon(images[i], icon_size=(45,45))
+            folium.Marker(points[indexes_10km[i]+1], icon=pushpin, popup=str((i+1)*10)).add_to(m)
+        except IndexError:
+            break
 
     # # Mark start and end points
-    # pushpin = folium.features.CustomIcon('/assets/images/startline.png', icon_size=(60,60))
-    # folium.Marker(points[0], icon=pushpin, popup="Start").add_to(m)
-    # pushpin = folium.features.CustomIcon('/assets/images/finish.png', icon_size=(60,60))
-    # folium.Marker(points[-1], icon=pushpin, popup="Finish").add_to(m)
-    
+    pushpin = folium.features.CustomIcon('assets/images/startline.png', icon_size=(60,60))
+    folium.Marker(points[0], icon=pushpin, popup="Start").add_to(m)
+    pushpin = folium.features.CustomIcon('assets/images/finish.png', icon_size=(60,60))
+    folium.Marker(points[-1], icon=pushpin, popup="Finish").add_to(m)
+
     return m.get_root().render()
