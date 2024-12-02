@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 import folium
 import math
 import cmath
+import time
 
 # Function to calculate the gradient
 def calculate_gradient(elevation_diff, distance):
@@ -330,4 +331,10 @@ def update_speed_pacing(data):
     data['cum_pacing_time'] = data['updated_pacing_time'].cumsum()
     data['cum_pacing_time_hms'] = data['cum_pacing_time'].apply(convert_seconds_to_hms)
 
-    return data['cum_pacing_time_hms'].tail(1).values
+    sec = data['cum_pacing_time'].tail(1).values + 60 # Adding 1 minute to the ride
+    ty_res = time.gmtime(int(sec))
+    if sec < 3600:
+        res = time.strftime("%-M minute(s)",ty_res)
+    else:
+        res = time.strftime("%-H hour(s) and %-M minute(s)",ty_res)        
+    return res

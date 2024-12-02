@@ -30,7 +30,7 @@ def register_callbacks(app):
                             style={"textAlign": "center", "marginTop": "15px"},
                         ),
                         html.H2(
-                            f"It will take {estimated_time} to complete the ride.",
+                            f"It will take approximately {estimated_time} to complete the ride.",
                             style={"textAlign": "center", "marginTop": "15px"},
                         ),
                         dbc.Row(
