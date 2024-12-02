@@ -4,13 +4,31 @@ import dash_bootstrap_components as dbc
 from data_processing import visualize_data, visualize_map, update_speed_pacing
 
 # Callback to handle file upload and display data
+
+strategy_desc = {
+            "zone1": "Recovery Ride (Zone 1)",
+            "zone2": "Endurance Ride (Zone 2)",
+            "zone3": "Tempo Ride (Zone 3)",
+            "push_hard": "Push Hard Ride"
+        }
+
 def register_callbacks(app):
     @app.callback(
         Output('output-data-upload', 'children'),
-        [Input('upload-gpx', 'contents')],
+        [
+            Input('upload-gpx', 'contents'),
+            Input("ftp-input", "value"),
+            Input("strategy-selector", "value"),
+        ],
         [State('upload-gpx', 'filename')]
     )
-    def parse_and_display_gpx(contents, filename):
+    def parse_and_display_gpx(contents,ftp,strategy,filename):
+        if ftp is None or strategy is None:
+            return html.Div(
+                "Please provide FTP and select a strategy.",
+                className="text-center mt-4"
+                )
+        
         if contents is not None:
             try:
                 # Step 1: Parse the GPX file
@@ -25,12 +43,8 @@ def register_callbacks(app):
                 # Step 3: Visualize the data
                 return html.Div(
                     [
-                        html.H4(
-                            f"File '{filename}' uploaded successfully.",
-                            style={"textAlign": "center", "marginTop": "15px"},
-                        ),
                         html.H2(
-                            f"It will take approximately {estimated_time} to complete the ride.",
+                            f"The {strategy_desc[strategy]} will take approximately {estimated_time} to complete the ride.",
                             style={"textAlign": "center", "marginTop": "15px"},
                         ),
                         dbc.Row(
@@ -45,7 +59,6 @@ def register_callbacks(app):
                         ),
                     ]
                 )
-                #return visualize_data(data)
 
             except ValueError as e:
                 return f"An error occurred: {str(e)}"
