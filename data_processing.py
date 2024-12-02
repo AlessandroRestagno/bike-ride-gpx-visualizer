@@ -4,12 +4,12 @@ import numpy as np
 import pandas as pd
 import io
 import base64
-from dash import html
 import re
 import plotly.colors as colors
 import plotly.graph_objects as go
-import plotly.express as px
 import folium
+import math
+import cmath
 
 # Function to calculate the gradient
 def calculate_gradient(elevation_diff, distance):
@@ -239,3 +239,95 @@ def visualize_map(data):
     folium.Marker(points[-1], icon=pushpin, popup="Finish").add_to(m)
 
     return m.get_root().render()
+
+def convert_seconds_to_hms(seconds):
+  hours = int(seconds // 3600)
+  minutes = int((seconds % 3600) // 60)
+  seconds = int(seconds % 60)
+  return "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
+
+def update_speed_pacing(data):
+    """
+    Args:
+    data: data of the ride. distance, time, gradient, n-timestamps
+    power: Functional Threshold Power (FTP)
+    pacing: pacing strategy
+    """
+    C_d = 0.63  # Example values; replace as needed
+    A = 0.509
+    Rho = 1.22601  # Air density in kg/m^3
+    # V_hw = 0.0  # Headwind Velocity in m/s
+    W = 99  # Weight in Kg (Rider + Bike)
+    C_rr = 0.0036  # Rolling resistance coefficient
+    # Loss_dt = 2.0  # Percentage of losses
+    # P_legs = power  # Power from legs in watts
+
+    # Create a DataFrame with Gradient from 15 to -15
+    pacing_power_table = pd.DataFrame({'Gradient (%)': range(15, -16, -1)})
+
+    # Create pacing_factor column with the specified logic
+    pacing_power_table['pacing_factor'] = 0
+    pacing_power_table.loc[pacing_power_table['Gradient (%)'] > -10, 'pacing_factor'] = (pacing_power_table.loc[pacing_power_table['Gradient (%)'] > -10, 'Gradient (%)'] + 10) / 10
+    pacing_power_table.loc[pacing_power_table['Gradient (%)'] > 0, 'pacing_factor'] = (pacing_power_table.loc[pacing_power_table['Gradient (%)'] > 0, 'Gradient (%)'] + 10) / 50 + 0.8
+    pacing_power_table.loc[pacing_power_table['Gradient (%)'] >= 10, 'pacing_factor'] = 1.2
+    pacing_power_table.index = pacing_power_table['Gradient (%)']
+    pacing_power_table = pacing_power_table.drop(columns=['Gradient (%)'])
+
+    pacing = pacing_power_table
+    power = 180
+
+    for i in range(1,len(data)):
+        if i % 1000 == 0:
+            print(i)
+        if i == 1:
+            actual_speed = 0
+        else:
+            actual_speed = data.iloc[i-1]['updated_speed']
+        actual_power = power * pacing.loc[max(min(int(data.loc[i,'Gradient (%)']), 15), -15)].values[0]
+        cum_segment_distance = 0
+        cum_segment_time = 0
+        if data.loc[i,'Gradient (%)'] > 20:
+            delta_t = 0.025
+        elif data.loc[i,'Gradient (%)'] > 10:
+            delta_t = 0.05
+        else:
+            delta_t = 0.1
+        #count = 0
+        last_step = False
+        while not last_step:
+            # Calulate forces and accelearation
+            air_resistance = 0.5 * C_d * A * Rho * actual_speed**3
+            rolling_resistance = C_rr * W * 9.8067 * math.cos(math.atan(data.iloc[i]['Gradient (%)']/100)) * actual_speed
+            gravity_resistance = W * 9.8067 * math.sin(math.atan(data.iloc[i]['Gradient (%)']/100)) * actual_speed
+            net_force = actual_power - (air_resistance + rolling_resistance + gravity_resistance)
+            acceleration = net_force / W
+
+            # Calculate delta_d
+            delta_d = actual_speed * delta_t + 0.5 * acceleration * delta_t**2
+            # print('Under the Root ',actual_speed**2 + 2 * acceleration * delta_d)
+            actual_speed = math.sqrt(actual_speed**2 + 2 * acceleration * delta_d)
+            cum_segment_distance += delta_d
+            # delta_d is bigger than the actual segment
+            if cum_segment_distance > data.iloc[i]['Distance (m)']:
+                last_step = True
+                cum_segment_distance -= delta_d
+                delta_d = data.iloc[i]['Distance (m)'] - (cum_segment_distance)
+                cum_segment_distance += delta_d
+                actual_speed = math.sqrt(actual_speed**2 + 2 * acceleration * delta_d)
+                delta_t = delta_d / actual_speed
+
+            # Update segment time
+            cum_segment_time += delta_t
+            # print('Actual Speed',np.round(actual_speed,4),'Gradient ',data.iloc[i]['Gradient'],'Distance ',np.round(cum_segment_distance,2),'Cumulative Time ',np.round(cum_segment_time,2),'Net Power ',net_force)
+
+        data.at[i,'updated_speed'] = actual_speed
+        data.at[i,'updated_distance'] = cum_segment_distance
+        data.at[i,'updated_pacing_time'] = cum_segment_time
+        data.at[i,'updated_power'] = actual_power
+
+    data['updated_power'] = data['updated_power'].bfill()
+    data.at[0, 'updated_pacing_time'] = 3.1
+    data['cum_pacing_time'] = data['updated_pacing_time'].cumsum()
+    data['cum_pacing_time_hms'] = data['cum_pacing_time'].apply(convert_seconds_to_hms)
+
+    return data['cum_pacing_time_hms'].tail(1).values

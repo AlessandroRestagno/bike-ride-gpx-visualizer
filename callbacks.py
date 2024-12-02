@@ -1,7 +1,7 @@
 from dash import html, Input, Output, State, dcc
 from data_processing import parse_gpx, build_dataframe
 import dash_bootstrap_components as dbc
-from data_processing import visualize_data, visualize_map
+from data_processing import visualize_data, visualize_map, update_speed_pacing
 
 # Callback to handle file upload and display data
 def register_callbacks(app):
@@ -20,12 +20,17 @@ def register_callbacks(app):
                 data = build_dataframe(points)
                 fig_profile = visualize_data(data)
                 fig_map = visualize_map(data)
+                estimated_time = update_speed_pacing(data)
 
                 # Step 3: Visualize the data
                 return html.Div(
                     [
                         html.H4(
                             f"File '{filename}' uploaded successfully.",
+                            style={"textAlign": "center", "marginTop": "15px"},
+                        ),
+                        html.H2(
+                            f"It will take {estimated_time} to complete the ride.",
                             style={"textAlign": "center", "marginTop": "15px"},
                         ),
                         dbc.Row(

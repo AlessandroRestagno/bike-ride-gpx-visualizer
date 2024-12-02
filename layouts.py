@@ -6,7 +6,7 @@ layout = dbc.Container(
         dbc.Row(
             dbc.Col(
                 html.H1(
-                    "GPX File Upload and Visualization",
+                    "Route Profile, Map, And Estimated Time",
                     className="text-center mt-4 mb-4"
                 ),
                 width=12
