@@ -16,13 +16,19 @@ def register_callbacks(app):
     @app.callback(
         Output('output-data-upload', 'children'),
         [
-            Input('upload-gpx', 'contents'),
             Input("ftp-input", "value"),
+            Input("bike-mass", "value"),
+            Input("rider-mass", "value"),
+            Input("rolling-coeff", "value"),
+            Input("drag-coeff", "value"),
+            Input("frontal-area", "value"),
+            Input("air-density", "value"),
             Input("strategy-selector", "value"),
+            Input('upload-gpx', 'contents'),
         ],
         [State('upload-gpx', 'filename')]
     )
-    def parse_and_display_gpx(contents,ftp,strategy,filename):
+    def parse_and_display_gpx(ftp, bike_mass, rider_mass, C_r, C_d, A, rho, strategy, contents, filename):
         if ftp is None or strategy is None:
             return html.Div(
                 "Please provide FTP and select a strategy.",
@@ -38,14 +44,14 @@ def register_callbacks(app):
                 data = build_dataframe(points)
                 fig_profile = visualize_data(data)
                 fig_map = visualize_map(data)
-                estimated_time = update_speed_pacing(data)
+                estimated_time = update_speed_pacing(data,ftp,bike_mass,rider_mass,C_r,C_d,A,rho)
 
                 # Step 3: Visualize the data
                 return html.Div(
                     [
                         html.H2(
                             f"The {strategy_desc[strategy]} will take approximately {estimated_time} to complete the ride.",
-                            style={"textAlign": "center", "marginTop": "15px"},
+                            style={"textAlign": "center", "marginTop": "15px", "color": "white"},
                         ),
                         dbc.Row(
                             dbc.Col(dcc.Graph(figure=fig_profile), width=12),  # Full width for all data graph
@@ -66,5 +72,6 @@ def register_callbacks(app):
         # Default message if no file is uploaded
         return html.Div(
             "Upload a GPX file to see its data.",
-            className="text-center mt-4"
+            className="text-center mt-4",
+            style={"color": "white"},
         )

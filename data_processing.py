@@ -247,19 +247,15 @@ def convert_seconds_to_hms(seconds):
   seconds = int(seconds % 60)
   return "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
 
-def update_speed_pacing(data):
+def update_speed_pacing(data,ftp,bike_mass,rider_mass,C_r,C_d,A,rho):
     """
     Args:
     data: data of the ride. distance, time, gradient, n-timestamps
     power: Functional Threshold Power (FTP)
     pacing: pacing strategy
     """
-    C_d = 0.63  # Example values; replace as needed
-    A = 0.509
-    Rho = 1.22601  # Air density in kg/m^3
     # V_hw = 0.0  # Headwind Velocity in m/s
-    W = 99  # Weight in Kg (Rider + Bike)
-    C_rr = 0.0036  # Rolling resistance coefficient
+    W = bike_mass + rider_mass  # Weight in Kg (Rider + Bike)
     # Loss_dt = 2.0  # Percentage of losses
     # P_legs = power  # Power from legs in watts
 
@@ -267,7 +263,7 @@ def update_speed_pacing(data):
     pacing_power_table = pd.DataFrame({'Gradient (%)': range(15, -16, -1)})
 
     # Create pacing_factor column with the specified logic
-    pacing_power_table['pacing_factor'] = 0
+    pacing_power_table['pacing_factor'] = 0.0
     pacing_power_table.loc[pacing_power_table['Gradient (%)'] > -10, 'pacing_factor'] = (pacing_power_table.loc[pacing_power_table['Gradient (%)'] > -10, 'Gradient (%)'] + 10) / 10
     pacing_power_table.loc[pacing_power_table['Gradient (%)'] > 0, 'pacing_factor'] = (pacing_power_table.loc[pacing_power_table['Gradient (%)'] > 0, 'Gradient (%)'] + 10) / 50 + 0.8
     pacing_power_table.loc[pacing_power_table['Gradient (%)'] >= 10, 'pacing_factor'] = 1.2
@@ -275,7 +271,7 @@ def update_speed_pacing(data):
     pacing_power_table = pacing_power_table.drop(columns=['Gradient (%)'])
 
     pacing = pacing_power_table
-    power = 180
+    power = ftp
 
     for i in range(1,len(data)):
         if i % 1000 == 0:
@@ -297,8 +293,8 @@ def update_speed_pacing(data):
         last_step = False
         while not last_step:
             # Calulate forces and accelearation
-            air_resistance = 0.5 * C_d * A * Rho * actual_speed**3
-            rolling_resistance = C_rr * W * 9.8067 * math.cos(math.atan(data.iloc[i]['Gradient (%)']/100)) * actual_speed
+            air_resistance = 0.5 * C_d * A * rho * actual_speed**3
+            rolling_resistance = C_r * W * 9.8067 * math.cos(math.atan(data.iloc[i]['Gradient (%)']/100)) * actual_speed
             gravity_resistance = W * 9.8067 * math.sin(math.atan(data.iloc[i]['Gradient (%)']/100)) * actual_speed
             net_force = actual_power - (air_resistance + rolling_resistance + gravity_resistance)
             acceleration = net_force / W
