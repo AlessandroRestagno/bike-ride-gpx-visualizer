@@ -6,7 +6,7 @@ layout = dbc.Container(
         dbc.Row(
             dbc.Col(
                 html.H1(
-                    "Route Profile, Map, And Estimated Time",
+                    "Get the Route Profile, Map, and Estimated Time",
                     style={"color": "white"},
                     className="text-center mt-4 mb-4"
                 ),
@@ -80,7 +80,7 @@ layout = dbc.Container(
                     ],
                     style={"color": "white", "width": "100%", "fontSize": "16px", "padding": "5px"},
                     value="zone1",  # Default selection
-                    inline=False,
+                    inline=True,
                     className="mb-3"
                 )
             ], width=12, className="px-5"),

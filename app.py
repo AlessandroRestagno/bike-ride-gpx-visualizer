@@ -1,9 +1,4 @@
 import dash
-from dash import dcc, html, Input, Output, State, callback_context, dash_table
-import pandas as pd
-import io
-import base64
-from data_processing import extract_gpx_data, calculate_final_data
 import dash_bootstrap_components as dbc
 from layouts import layout
 from callbacks import register_callbacks
