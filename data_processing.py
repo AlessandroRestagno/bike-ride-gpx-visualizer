@@ -241,13 +241,17 @@ def visualize_map(data):
 
     return m.get_root().render()
 
-# def convert_seconds_to_hms(seconds):
-#   hours = int(seconds // 3600)
-#   minutes = int((seconds % 3600) // 60)
-#   seconds = int(seconds % 60)
-#   return "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
+def create_pacing(pacing_factor):
+  pacing_power_table = pd.DataFrame({'Gradient (%)': range(15, -16, -1)})
+  pacing_power_table['pacing_factor'] = 0.0
+  pacing_power_table.loc[pacing_power_table['Gradient (%)'] > -10, 'pacing_factor'] = (pacing_power_table.loc[pacing_power_table['Gradient (%)'] > -10, 'Gradient (%)'] + 10) / 10 * pacing_factor
+  pacing_power_table.loc[pacing_power_table['Gradient (%)'] > 0, 'pacing_factor'] = ((pacing_power_table.loc[pacing_power_table['Gradient (%)'] > 0, 'Gradient (%)'] + 10) / 50 + 0.8) * pacing_factor
+  pacing_power_table.loc[pacing_power_table['Gradient (%)'] >= 10, 'pacing_factor'] = 1.2 * pacing_factor
+  pacing_power_table.index = pacing_power_table['Gradient (%)']
+  pacing_power_table = pacing_power_table.drop(columns=['Gradient (%)'])
+  return pacing_power_table
 
-def update_speed_pacing(data,ftp,bike_mass,rider_mass,C_r,C_d,A,rho):
+def update_speed_pacing(data,ftp,bike_mass,rider_mass,C_r,C_d,A,rho,strategy):
     """
     Args:
     data: data of the ride. distance, time, gradient, n-timestamps
@@ -258,19 +262,14 @@ def update_speed_pacing(data,ftp,bike_mass,rider_mass,C_r,C_d,A,rho):
     W = bike_mass + rider_mass  # Weight in Kg (Rider + Bike)
     # Loss_dt = 2.0  # Percentage of losses
     # P_legs = power  # Power from legs in watts
-
-    # Create a DataFrame with Gradient from 15 to -15
-    pacing_power_table = pd.DataFrame({'Gradient (%)': range(15, -16, -1)})
-
-    # Create pacing_factor column with the specified logic
-    pacing_power_table['pacing_factor'] = 0.0
-    pacing_power_table.loc[pacing_power_table['Gradient (%)'] > -10, 'pacing_factor'] = (pacing_power_table.loc[pacing_power_table['Gradient (%)'] > -10, 'Gradient (%)'] + 10) / 10
-    pacing_power_table.loc[pacing_power_table['Gradient (%)'] > 0, 'pacing_factor'] = (pacing_power_table.loc[pacing_power_table['Gradient (%)'] > 0, 'Gradient (%)'] + 10) / 50 + 0.8
-    pacing_power_table.loc[pacing_power_table['Gradient (%)'] >= 10, 'pacing_factor'] = 1.2
-    pacing_power_table.index = pacing_power_table['Gradient (%)']
-    pacing_power_table = pacing_power_table.drop(columns=['Gradient (%)'])
-
-    pacing = pacing_power_table
+    
+    pacing_factors = {
+        'zone1':0.5,
+        'zone2':0.7,
+        'zone3':0.85,
+        'push_hard':1
+    }
+    pacing = create_pacing(pacing_factors[strategy])
     power = ftp
 
     for i in range(1,len(data)):

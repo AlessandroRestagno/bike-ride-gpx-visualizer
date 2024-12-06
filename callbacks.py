@@ -44,7 +44,7 @@ def register_callbacks(app):
                 data = build_dataframe(points)
                 fig_profile = visualize_data(data)
                 fig_map = visualize_map(data)
-                estimated_time = update_speed_pacing(data,ftp,bike_mass,rider_mass,C_r,C_d,A,rho)
+                estimated_time = update_speed_pacing(data,ftp,bike_mass,rider_mass,C_r,C_d,A,rho,strategy)
 
                 # Step 3: Visualize the data
                 return html.Div(
