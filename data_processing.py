@@ -241,11 +241,11 @@ def visualize_map(data):
 
     return m.get_root().render()
 
-def convert_seconds_to_hms(seconds):
-  hours = int(seconds // 3600)
-  minutes = int((seconds % 3600) // 60)
-  seconds = int(seconds % 60)
-  return "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
+# def convert_seconds_to_hms(seconds):
+#   hours = int(seconds // 3600)
+#   minutes = int((seconds % 3600) // 60)
+#   seconds = int(seconds % 60)
+#   return "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
 
 def update_speed_pacing(data,ftp,bike_mass,rider_mass,C_r,C_d,A,rho):
     """
@@ -289,7 +289,6 @@ def update_speed_pacing(data,ftp,bike_mass,rider_mass,C_r,C_d,A,rho):
             delta_t = 0.05
         else:
             delta_t = 0.1
-        #count = 0
         last_step = False
         while not last_step:
             # Calulate forces and accelearation
@@ -325,7 +324,7 @@ def update_speed_pacing(data,ftp,bike_mass,rider_mass,C_r,C_d,A,rho):
     data['updated_power'] = data['updated_power'].bfill()
     data.at[0, 'updated_pacing_time'] = 3.1
     data['cum_pacing_time'] = data['updated_pacing_time'].cumsum()
-    data['cum_pacing_time_hms'] = data['cum_pacing_time'].apply(convert_seconds_to_hms)
+    # data['cum_pacing_time_hms'] = data['cum_pacing_time'].apply(convert_seconds_to_hms)
 
     sec = data['cum_pacing_time'].tail(1).values + 60 # Adding 1 minute to the ride
     ty_res = time.gmtime(int(sec))

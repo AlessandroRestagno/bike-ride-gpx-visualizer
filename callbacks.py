@@ -50,7 +50,7 @@ def register_callbacks(app):
                 return html.Div(
                     [
                         html.H2(
-                            f"The {strategy_desc[strategy]} will take approximately {estimated_time} to complete the ride.",
+                            f"The {strategy_desc[strategy]} will take approximately {estimated_time}.",
                             style={"textAlign": "center", "marginTop": "15px", "color": "white"},
                         ),
                         dbc.Row(
