@@ -1,4 +1,4 @@
-from dash import html, Input, Output, State, dcc, ctx
+from dash import html, Input, Output, State, dcc
 from data_processing import parse_gpx, build_dataframe
 import dash_bootstrap_components as dbc
 from data_processing import visualize_data, visualize_map, update_speed_pacing

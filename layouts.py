@@ -69,21 +69,30 @@ layout = dbc.Container(
         # Strategy Selector and Upload GPX File
         dbc.Row([
             dbc.Col([
-                html.Label("Select a Riding Strategy:", style={"color": "white", "padding": "5px", "margin-top": "15px"}),
+                html.Label("SELECT A RIDING STRATEGY", style={"color": "white", "fontWeight": "bold", "padding": "5px", "margin-top": "15px"}),
                 dbc.RadioItems(
                     id="strategy-selector",
                     options=[
                         {"label": "Recovery Ride (Zone 1)", "value": "zone1"},
-                        {"label": "Endurance Ride (Zone 2)", "value": "zone2"},
+                        {"label": "Endurance Ride (Zone 2)", "value": "zone2",},
                         {"label": "Tempo Ride (Zone 3)", "value": "zone3"},
                         {"label": "Push Hard Ride", "value": "push_hard"},
                     ],
-                    style={"color": "white", "width": "100%", "fontSize": "16px", "padding": "5px"},
-                    value="zone1",  # Default selection
-                    inline=True,
-                    className="mb-3"
+                    className="btn-group",
+                    inputClassName="btn-check",
+                    labelClassName="btn btn-outline-light",
+                    labelCheckedClassName="active",
+                    value='zone1'
                 )
-            ], width=12, className="px-5"),
+            ],
+            width=12,
+            style={
+                "display": "flex",
+                "justifyContent": "center",  # Horizontal centering
+                "alignItems": "center",  # Vertical centering
+                "paddingTop": "20px",  # Adds 20px of top padding
+            }
+            ),
         ]),
         dbc.Row(
             dbc.Col(
