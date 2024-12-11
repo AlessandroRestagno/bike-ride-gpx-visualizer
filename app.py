@@ -10,6 +10,9 @@ app = dash.Dash(
     title="GPX File Visualizer"
     )
 
+# Expose the server for Gunicorn
+server = app.server
+
 # Define the app layout
 app.layout = layout
 

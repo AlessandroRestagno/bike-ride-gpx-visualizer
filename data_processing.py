@@ -273,8 +273,6 @@ def update_speed_pacing(data,ftp,bike_mass,rider_mass,C_r,C_d,A,rho,strategy):
     power = ftp
 
     for i in range(1,len(data)):
-        if i % 1000 == 0:
-            print(i)
         if i == 1:
             actual_speed = 0
         else:
