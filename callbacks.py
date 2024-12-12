@@ -38,14 +38,14 @@ def register_callbacks(app):
                 data = build_dataframe(points)
                 fig_profile = visualize_data(data)
                 fig_map = visualize_map(data)
-                estimated_time = update_speed_pacing(data,ftp,bike_mass,rider_mass,C_r,C_d,A,rho,strategy)
+                estimated_time, energy_consumption, elevation_gain = update_speed_pacing(data,ftp,bike_mass,rider_mass,C_r,C_d,A,rho,strategy)
                 total_distance = np.round(data['Cumulative Distance (m)'].tail(1).values[0] / 1000, 1)
                 
                 # Step 3: Visualize the data
                 return html.Div(
                     [
                         html.H2(
-                            f"The {total_distance} km ride will take approximately {estimated_time}.",
+                            f"The {total_distance} km ride with an elevation gain of {elevation_gain} m will take approximately {estimated_time} and an energy consumption of {energy_consumption} kJ.",
                             style={"textAlign": "center", "marginTop": "15px", "color": "white"},
                         ),
                         dbc.Row(

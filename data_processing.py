@@ -321,12 +321,13 @@ def update_speed_pacing(data,ftp,bike_mass,rider_mass,C_r,C_d,A,rho,strategy):
     data['updated_power'] = data['updated_power'].bfill()
     data.at[0, 'updated_pacing_time'] = 3.1
     data['cum_pacing_time'] = data['updated_pacing_time'].cumsum()
-    # data['cum_pacing_time_hms'] = data['cum_pacing_time'].apply(convert_seconds_to_hms)
-
+    
+    total_energy_consumption = round((data['updated_power'] * data['updated_pacing_time']).sum() / 1000)
+    elevation_gain = int(((data['Gradient (%)'] > 0) * data['Distance (m)'] * data['Gradient (%)']/100).sum())
     sec = data['cum_pacing_time'].tail(1).values + 60 # Adding 1 minute to the ride
     ty_res = time.gmtime(int(sec))
     if sec < 3600:
         res = time.strftime("%-M minute(s)",ty_res)
     else:
         res = time.strftime("%-H hour(s) and %-M minute(s)",ty_res)        
-    return res
+    return res, total_energy_consumption, elevation_gain
