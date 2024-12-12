@@ -45,7 +45,7 @@ def register_callbacks(app):
                 return html.Div(
                     [
                         html.H2(
-                            f"The {total_distance} km ride with an elevation gain of {elevation_gain} m will take approximately {estimated_time} and an energy consumption of {energy_consumption} kJ.",
+                            f"The {total_distance} km ride, featuring a {elevation_gain} m elevation gain, will take approximately {estimated_time} and require an energy expenditure of {energy_consumption} kJ.",
                             style={"textAlign": "center", "marginTop": "15px", "color": "white"},
                         ),
                         dbc.Row(
