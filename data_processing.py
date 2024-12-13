@@ -9,7 +9,6 @@ import plotly.colors as colors
 import plotly.graph_objects as go
 import folium
 import math
-import cmath
 import time
 
 # Function to calculate the gradient
